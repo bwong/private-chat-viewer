@@ -104,11 +104,33 @@
   text-decoration: underline;
 }
 
-.mediaOmitted {
-  color: #888;
-  font-size: 0.85rem;
-  font-style: italic;
-  padding: 4px 0;
+.mediaPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  padding: 16px 12px;
+  min-width: 160px;
+  text-align: center;
+}
+
+.mediaPlaceholderIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.mediaPlaceholderText {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.mediaPlaceholderFilename {
+  font-size: 0.72rem;
+  color: #999;
+  word-break: break-all;
 }
 
 /* ── System message ─────────────────────────────────────────────────────── */

@@ -89,15 +89,18 @@ function extractAndroidEntry(line: string): RawEntry | null {
 }
 
 function extractMediaFilename(text: string): string | null {
-  let m = IOS_MEDIA_ATTACHED_RE.exec(text)
+  // Strip leading bidi marks — iOS prepends U+200E before <attached: ...>
+  const clean = text.replace(BIDI_MARKS_RE, '')
+
+  let m = IOS_MEDIA_ATTACHED_RE.exec(clean)
   if (m) return m[1]
 
-  m = ANDROID_MEDIA_ATTACHED_RE.exec(text)
+  m = ANDROID_MEDIA_ATTACHED_RE.exec(clean)
   if (m) return m[1]
 
-  if (IOS_MEDIA_OMITTED_RE.test(text)) {
-    // e.g. "‎image omitted" — no actual filename, just a placeholder
-    return text.replace(BIDI_MARKS_RE, '').trim()
+  if (IOS_MEDIA_OMITTED_RE.test(clean)) {
+    // e.g. "image omitted" — no actual filename, just a placeholder
+    return clean.trim()
   }
 
   return null
@@ -122,8 +125,12 @@ function entryToMessage(id: string, timestamp: Date, body: string): Message {
   }
 
   const sender = body.slice(0, colonIndex)
-  const text = body.slice(colonIndex + 2)
-  const mediaFilename = extractMediaFilename(text)
+  const rawText = body.slice(colonIndex + 2)
+  const mediaFilename = extractMediaFilename(rawText)
+
+  // When the entire text IS the media marker, don't store it as display text.
+  // It's a structural token, not a human-written caption.
+  const text = mediaFilename ? '' : rawText
 
   return {
     id,
