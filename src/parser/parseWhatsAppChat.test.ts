@@ -286,24 +286,34 @@ describe('edited messages', () => {
 // ─── detectDateOrder ──────────────────────────────────────────────────────────
 
 describe('detectDateOrder', () => {
-  test('returns mm/dd for iOS AM/PM export', () => {
-    expect(detectDateOrder('[12/19/23, 9:12:09 AM] Nina: test')).toBe('mm/dd')
+  test('certain mm/dd when second number > 12 (e.g. 12/19/23)', () => {
+    const result = detectDateOrder('[12/19/23, 9:12:09 AM] Nina: test')
+    expect(result.order).toBe('mm/dd')
+    expect(result.confidence).toBe('certain')
   })
 
-  test('returns mm/dd for Android AM/PM export', () => {
-    expect(detectDateOrder('1/1/23, 10:00 AM - Alice: hi')).toBe('mm/dd')
+  test('certain dd/mm when first number > 12 (e.g. 13/01/2023)', () => {
+    const result = detectDateOrder('[13/01/2023, 10:00:00] Alice: Hello')
+    expect(result.order).toBe('dd/mm')
+    expect(result.confidence).toBe('certain')
   })
 
-  test('returns dd/mm for iOS 24h export', () => {
-    expect(detectDateOrder('[01/01/2023, 10:00:00] Alice: Hello')).toBe('dd/mm')
+  test('guessed mm/dd from AM/PM when all dates ambiguous', () => {
+    const result = detectDateOrder('1/1/23, 10:00 AM - Alice: hi')
+    expect(result.order).toBe('mm/dd')
+    expect(result.confidence).toBe('guessed')
   })
 
-  test('returns dd/mm for Android 24h export', () => {
-    expect(detectDateOrder('01/01/2023, 10:00 - Alice: Hello')).toBe('dd/mm')
+  test('guessed dd/mm from 24h when all dates ambiguous', () => {
+    const result = detectDateOrder('[01/01/2023, 10:00:00] Alice: Hello')
+    expect(result.order).toBe('dd/mm')
+    expect(result.confidence).toBe('guessed')
   })
 
-  test('returns dd/mm for empty text', () => {
-    expect(detectDateOrder('')).toBe('dd/mm')
+  test('guessed dd/mm for empty text', () => {
+    const result = detectDateOrder('')
+    expect(result.order).toBe('dd/mm')
+    expect(result.confidence).toBe('guessed')
   })
 })
 

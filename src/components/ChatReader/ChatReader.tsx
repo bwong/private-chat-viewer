@@ -5,7 +5,7 @@ import { buildListItems } from './buildListItems'
 import { searchMessages } from './searchMessages'
 import { findNearestListIndex } from './findNearestListIndex'
 import { parseWhatsAppChat, detectDateOrder } from '../../parser/parseWhatsAppChat'
-import type { DateOrder } from '../../parser/parseWhatsAppChat'
+import type { DateOrder, DateOrderConfidence } from '../../parser/parseWhatsAppChat'
 import { MessageBubble } from './MessageBubble'
 import { DateSeparator } from './DateSeparator'
 import { SearchPanel } from './SearchPanel'
@@ -130,16 +130,21 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [dateOrderPickerOpen, setDateOrderPickerOpen] = useState(false)
 
   const [dateOrder, setDateOrder] = useState<DateOrder>(
-    () => detectDateOrder(chat.rawText),
+    () => detectDateOrder(chat.rawText).order,
+  )
+  const [dateOrderConfidence] = useState<DateOrderConfidence>(
+    () => detectDateOrder(chat.rawText).confidence,
   )
   const [messages, setMessages] = useState(chat.messages)
 
-  function handleToggleDateOrder() {
-    const next: DateOrder = dateOrder === 'mm/dd' ? 'dd/mm' : 'mm/dd'
-    setDateOrder(next)
-    setMessages(parseWhatsAppChat(chat.rawText, next))
+  function handleSelectDateOrder(order: DateOrder) {
+    setDateOrderPickerOpen(false)
+    if (order === dateOrder) return
+    setDateOrder(order)
+    setMessages(parseWhatsAppChat(chat.rawText, order))
   }
 
   const listItems = useMemo(() => buildListItems(messages), [messages])
@@ -228,10 +233,10 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
 
         <button
           className={styles.dateOrderButton}
-          onClick={handleToggleDateOrder}
-          title={`Date format: ${dateOrder.toUpperCase()} — click to switch`}
+          onClick={() => setDateOrderPickerOpen(true)}
+          title="Change date format"
         >
-          {dateOrder.toUpperCase()}
+          {dateOrder === 'mm/dd' ? 'M/D' : 'D/M'}
         </button>
 
         <button
@@ -269,6 +274,44 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
           onSelect={handleSelectDate}
           onClose={() => setCalendarOpen(false)}
         />
+      )}
+
+      {/* ── Date order picker overlay ── */}
+      {dateOrderPickerOpen && (
+        <div className={styles.pickerOverlay} onClick={() => setDateOrderPickerOpen(false)}>
+          <div className={styles.pickerCard} onClick={(e) => e.stopPropagation()}>
+            <h2 className={styles.pickerTitle}>Date format</h2>
+            <p className={styles.pickerSubtitle}>
+              How are dates ordered in this chat? Select the format that matches your export.
+            </p>
+            {dateOrderConfidence === 'guessed' && (
+              <p className={styles.pickerDetectedNote}>
+                Could not detect with certainty — guessed from time format. Adjust if dates look wrong.
+              </p>
+            )}
+            <ul className={styles.pickerList}>
+              <li>
+                <button
+                  className={`${styles.pickerOption} ${dateOrder === 'mm/dd' ? styles.pickerOptionActive : ''}`}
+                  onClick={() => handleSelectDateOrder('mm/dd')}
+                >
+                  Month / Day (e.g. 6/23/25)
+                </button>
+              </li>
+              <li>
+                <button
+                  className={`${styles.pickerOption} ${dateOrder === 'dd/mm' ? styles.pickerOptionActive : ''}`}
+                  onClick={() => handleSelectDateOrder('dd/mm')}
+                >
+                  Day / Month (e.g. 23/6/25)
+                </button>
+              </li>
+            </ul>
+            <button className={styles.pickerSkip} onClick={() => setDateOrderPickerOpen(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ── Participant picker overlay ── */}

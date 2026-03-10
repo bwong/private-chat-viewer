@@ -41,20 +41,40 @@ function detectFormat(text: string): Format {
   return 'ios' // fallback
 }
 
+export type DateOrderConfidence = 'certain' | 'guessed'
+
 /**
  * Detect the date component order from the raw export text.
- * AM/PM presence → US locale → MM/DD. 24h → international → DD/MM.
+ *
+ * Scans the entire file but short-circuits as soon as an unambiguous date is
+ * found (a component value that is impossible for one interpretation):
+ *   first number > 12  → must be the day  → DD/MM, certain
+ *   second number > 12 → must be the day  → MM/DD, certain
+ *
+ * Only if every date in the file has both components ≤ 12 (truly ambiguous)
+ * does it fall back to a weaker signal:
+ *   AM/PM seen anywhere → MM/DD, guessed
+ *   24h throughout      → DD/MM, guessed
  */
-export function detectDateOrder(rawText: string): DateOrder {
+export function detectDateOrder(
+  rawText: string,
+): { order: DateOrder; confidence: DateOrderConfidence } {
   const text = rawText.startsWith('\uFEFF') ? rawText.slice(1) : rawText
-  for (const line of text.split('\n').slice(0, 50)) {
+  let ampmSeen = false
+
+  for (const line of text.split('\n')) {
     const clean = line.replace(BIDI_MARKS_RE, '')
-    const ios = IOS_DATE_PREFIX_RE.exec(clean)
-    if (ios && ios[7]) return 'mm/dd'
-    const android = ANDROID_DATE_PREFIX_RE.exec(clean)
-    if (android && android[7]) return 'mm/dd'
+    const m =
+      IOS_DATE_PREFIX_RE.exec(clean) ?? ANDROID_DATE_PREFIX_RE.exec(clean)
+    if (!m) continue
+    const first = parseInt(m[1], 10)
+    const second = parseInt(m[2], 10)
+    if (first > 12) return { order: 'dd/mm', confidence: 'certain' }
+    if (second > 12) return { order: 'mm/dd', confidence: 'certain' }
+    if (m[7]) ampmSeen = true
   }
-  return 'dd/mm'
+
+  return { order: ampmSeen ? 'mm/dd' : 'dd/mm', confidence: 'guessed' }
 }
 
 function parseDate(
@@ -172,7 +192,7 @@ export function parseWhatsAppChat(rawText: string, dateOrderOverride?: DateOrder
   const lines = text.split('\n').map((l) => l.trimEnd())
 
   const format = detectFormat(text)
-  const dateOrder = dateOrderOverride ?? detectDateOrder(text)
+  const dateOrder = dateOrderOverride ?? detectDateOrder(text).order
   const usLocale = dateOrder === 'mm/dd'
 
   const extractEntry =
