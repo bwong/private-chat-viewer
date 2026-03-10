@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from 'react'
+import { useRef, useMemo, useState, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { ChatData } from '../../types'
 import { buildListItems } from './buildListItems'
@@ -33,6 +33,14 @@ interface ParticipantPickerProps {
 }
 
 function ParticipantPicker({ participants, onSelect, onSkip }: ParticipantPickerProps) {
+  const [manualName, setManualName] = useState('')
+  const [showManual, setShowManual] = useState(participants.length === 0)
+
+  const handleManualSubmit = useCallback(() => {
+    const name = manualName.trim()
+    if (name) onSelect(name)
+  }, [manualName, onSelect])
+
   return (
     <div className={styles.pickerOverlay}>
       <div className={styles.pickerCard}>
@@ -40,15 +48,54 @@ function ParticipantPicker({ participants, onSelect, onSkip }: ParticipantPicker
         <p className={styles.pickerSubtitle}>
           Your messages will appear on the right, just like in WhatsApp.
         </p>
-        <ul className={styles.pickerList}>
-          {participants.map((name) => (
-            <li key={name}>
-              <button className={styles.pickerOption} onClick={() => onSelect(name)}>
-                {name}
+
+        {participants.length > 0 && (
+          <ul className={styles.pickerList}>
+            {participants.map((name) => (
+              <li key={name}>
+                <button className={styles.pickerOption} onClick={() => onSelect(name)}>
+                  {name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {!showManual && participants.length > 0 && (
+          <button className={styles.pickerNotListed} onClick={() => setShowManual(true)}>
+            My name isn't listed…
+          </button>
+        )}
+
+        {showManual && (
+          <div className={styles.pickerManual}>
+            {participants.length === 0 && (
+              <p className={styles.pickerManualNote}>
+                Participants could not be detected automatically. Type your name exactly as it
+                appears in the chat:
+              </p>
+            )}
+            <div className={styles.pickerManualRow}>
+              <input
+                className={styles.pickerManualInput}
+                type="text"
+                placeholder="Your name in the chat"
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
+                autoFocus
+              />
+              <button
+                className={styles.pickerManualConfirm}
+                onClick={handleManualSubmit}
+                disabled={!manualName.trim()}
+              >
+                Confirm
               </button>
-            </li>
-          ))}
-        </ul>
+            </div>
+          </div>
+        )}
+
         <button className={styles.pickerSkip} onClick={onSkip}>
           Skip — show all messages on the left
         </button>

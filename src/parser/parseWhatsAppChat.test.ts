@@ -2,6 +2,7 @@ import { describe, test, expect } from 'vitest'
 import { parseWhatsAppChat } from './parseWhatsAppChat'
 
 import iosBasic from './fixtures/ios-basic.txt?raw'
+import iosAmpm from './fixtures/ios-ampm.txt?raw'
 import androidBasic from './fixtures/android-basic.txt?raw'
 import androidAmpm from './fixtures/android-ampm.txt?raw'
 import multiline from './fixtures/multiline.txt?raw'
@@ -50,6 +51,43 @@ describe('iOS basic format', () => {
 
   test('assigns sequential ids', () => {
     expect(messages.map((m) => m.id)).toEqual(['0', '1', '2', '3', '4', '5'])
+  })
+})
+
+// ─── iOS AM/PM format (US locale) ────────────────────────────────────────────
+
+describe('iOS AM/PM format', () => {
+  const messages = parseWhatsAppChat(iosAmpm)
+
+  test('parses correct number of messages', () => {
+    expect(messages).toHaveLength(7)
+  })
+
+  test('parses senders correctly', () => {
+    expect(messages[0].sender).toBe('Brian')
+    expect(messages[3].sender).toBe('Nina')
+  })
+
+  test('parses 9:27:59 PM correctly (hour 21)', () => {
+    expect(messages[0].timestamp.getHours()).toBe(21)
+    expect(messages[0].timestamp.getMinutes()).toBe(27)
+    expect(messages[0].timestamp.getSeconds()).toBe(59)
+  })
+
+  test('parses 12:00:01 AM correctly (hour 0)', () => {
+    expect(messages[5].timestamp.getHours()).toBe(0)
+  })
+
+  test('parses 12:00:30 PM correctly (hour 12)', () => {
+    expect(messages[6].timestamp.getHours()).toBe(12)
+  })
+
+  test('parses text correctly', () => {
+    expect(messages[0].text).toBe('Hi there')
+  })
+
+  test('marks messages as non-system', () => {
+    messages.forEach((m) => expect(m.isSystemMessage).toBe(false))
   })
 })
 
@@ -226,5 +264,19 @@ describe('edge cases', () => {
     const messages = parseWhatsAppChat(text)
     expect(messages).toHaveLength(2)
     expect(messages[0].text).toBe('Hello')
+  })
+
+  test('handles iOS exports where every line is prefixed with U+200E', () => {
+    // Some iOS exports prepend the LTR mark to all lines, not just system messages
+    const text =
+      '\u200e[01/01/2023, 10:00:00] Alice: Hello\n' +
+      '\u200e[01/01/2023, 10:01:00] Bob: World\n' +
+      '\u200e[01/01/2023, 10:02:00] \u200eAlice created group "Test"\n'
+    const messages = parseWhatsAppChat(text)
+    expect(messages).toHaveLength(3)
+    expect(messages[0].sender).toBe('Alice')
+    expect(messages[0].text).toBe('Hello')
+    expect(messages[1].sender).toBe('Bob')
+    expect(messages[2].isSystemMessage).toBe(true)
   })
 })

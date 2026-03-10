@@ -9,4 +9,12 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #d1d5db;
+}
+
+#root {
+  max-width: 780px;
+  margin: 0 auto;
+  height: 100vh;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
 }

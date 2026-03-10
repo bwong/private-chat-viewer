@@ -133,6 +133,21 @@
   background-color: #f0faf9;
 }
 
+.pickerNotListed {
+  background: none;
+  border: none;
+  color: #128c7e;
+  font-size: 0.825rem;
+  cursor: pointer;
+  padding: 4px 0 8px;
+  text-decoration: underline;
+  display: block;
+}
+
+.pickerNotListed:hover {
+  color: #0f7568;
+}
+
 .pickerSkip {
   width: 100%;
   background: none;
@@ -146,4 +161,48 @@
 
 .pickerSkip:hover {
   color: #555;
+}
+
+.pickerManual {
+  margin-bottom: 8px;
+}
+
+.pickerManualNote {
+  font-size: 0.825rem;
+  color: #666;
+  margin: 0 0 12px;
+}
+
+.pickerManualRow {
+  display: flex;
+  gap: 8px;
+}
+
+.pickerManualInput {
+  flex: 1;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.pickerManualInput:focus {
+  border-color: #128c7e;
+}
+
+.pickerManualConfirm {
+  background-color: #128c7e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pickerManualConfirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

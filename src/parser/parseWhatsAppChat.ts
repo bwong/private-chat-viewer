@@ -1,11 +1,13 @@
 import type { Message } from '../types'
 
-// iOS export format:    [DD/MM/YYYY, HH:MM:SS] Sender: text
+// iOS export formats:
+//   [DD/MM/YYYY, HH:MM:SS] Sender: text          (24h, global)
+//   [M/D/YY, H:MM:SS AM/PM] Sender: text         (12h, US locale)
 // Android export format: DD/MM/YYYY, HH:MM - Sender: text
 //                     or D/M/YY, H:MM AM/PM - Sender: text
 
 const IOS_DATE_PREFIX_RE =
-  /^\[(\d{1,2})\/(\d{1,2})\/(\d{2,4}), (\d{1,2}):(\d{2}):(\d{2})\] /
+  /^\[(\d{1,2})\/(\d{1,2})\/(\d{2,4}), (\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)?\] /i
 
 const ANDROID_DATE_PREFIX_RE =
   /^(\d{1,2})\/(\d{1,2})\/(\d{2,4}), (\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)? - /i
@@ -31,9 +33,11 @@ interface RawEntry {
 function detectFormat(text: string): Format {
   // Scan the first several lines to find the first timestamped one.
   // Header lines may appear before any timestamps.
+  // Some iOS exports prepend U+200E to every line, so strip it before checking.
   for (const line of text.split('\n').slice(0, 20)) {
-    if (line.startsWith('[')) return 'ios'
-    if (/^\d{1,2}\/\d{1,2}\/\d{2,4},/.test(line)) return 'android'
+    const clean = line.replace(BIDI_MARKS_RE, '')
+    if (clean.startsWith('[')) return 'ios'
+    if (/^\d{1,2}\/\d{1,2}\/\d{2,4},/.test(clean)) return 'android'
   }
   return 'ios' // fallback
 }
@@ -64,20 +68,23 @@ function parseDate(
 }
 
 function extractIosEntry(line: string): RawEntry | null {
-  const match = IOS_DATE_PREFIX_RE.exec(line)
+  // Strip any leading bidi marks — some iOS exports prepend U+200E to every line
+  const clean = line.replace(BIDI_MARKS_RE, '')
+  const match = IOS_DATE_PREFIX_RE.exec(clean)
   if (!match) return null
-  const [, day, month, year, hour, minute, second] = match
-  const timestamp = parseDate(day, month, year, hour, minute, second, undefined)
-  const body = line.slice(match[0].length)
+  const [, day, month, year, hour, minute, second, ampm] = match
+  const timestamp = parseDate(day, month, year, hour, minute, second, ampm)
+  const body = clean.slice(match[0].length)
   return { timestamp, body }
 }
 
 function extractAndroidEntry(line: string): RawEntry | null {
-  const match = ANDROID_DATE_PREFIX_RE.exec(line)
+  const clean = line.replace(BIDI_MARKS_RE, '')
+  const match = ANDROID_DATE_PREFIX_RE.exec(clean)
   if (!match) return null
   const [, day, month, year, hour, minute, second, ampm] = match
   const timestamp = parseDate(day, month, year, hour, minute, second, ampm)
-  const body = line.slice(match[0].length)
+  const body = clean.slice(match[0].length)
   return { timestamp, body }
 }
 
