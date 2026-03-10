@@ -12,6 +12,7 @@ import { SearchPanel } from './SearchPanel'
 import { CalendarPanel } from './CalendarPanel'
 import styles from './ChatReader.module.css'
 import { strings } from '../../strings'
+import { formatDateLabel } from './formatDateLabel'
 
 const sp = strings.participantPicker
 const sd = strings.dateFormatPicker
@@ -178,6 +179,29 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
     overscan: 10,
   })
 
+  // Derive the floating date label from the first *visible* virtual item.
+  // We skip overscan items (those whose bottom edge is at or above the scroll offset)
+  // so the date reflects what's actually on screen, not items rendered off-screen above.
+  // Hide the chip when the topmost visible item is itself a date-separator to avoid doubling.
+  const floatingDate = useMemo(() => {
+    const scrollOffset = virtualizer.scrollOffset ?? 0
+    const virtualItems = virtualizer.getVirtualItems()
+    const firstVisible = virtualItems.find((v) => v.start + v.size > scrollOffset)
+    if (!firstVisible) return null
+
+    const topIndex = firstVisible.index
+    // If the first visible item is a date separator, the separator itself is visible — no chip needed
+    if (listItems[topIndex]?.type === 'date-separator') return null
+
+    for (let i = topIndex; i >= 0; i--) {
+      const item = listItems[i]
+      if (item?.type === 'date-separator') {
+        return formatDateLabel(item.date)
+      }
+    }
+    return null
+  }, [virtualizer.getVirtualItems(), virtualizer.scrollOffset, listItems])
+
   function handleSelectUser(name: string) {
     localStorage.setItem(storageKey, name)
     setCurrentUser(name)
@@ -321,6 +345,11 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
 
       {/* ── Virtual message list ── */}
       <div ref={scrollRef} className={styles.scrollContainer}>
+        {floatingDate && (
+          <div className={styles.floatingDate}>
+            <span className={styles.floatingDateLabel}>{floatingDate}</span>
+          </div>
+        )}
         <div
           style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}
         >

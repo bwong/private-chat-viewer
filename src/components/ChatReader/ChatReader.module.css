@@ -105,6 +105,29 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 8px 0 16px;
+  position: relative;
+}
+
+/* ── Floating date chip ──────────────────────────────────────────────────── */
+
+.floatingDate {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.floatingDateLabel {
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
 }
 
 /* ── Participant picker overlay ──────────────────────────────────────────── */
