@@ -1,0 +1,6 @@
+[01/01/2023, 10:00:00] Alice: Happy New Year! 🎉
+[01/01/2023, 10:00:15] Bob: You too! 🥂
+[01/01/2023, 10:01:00] Alice: What are your plans for today?
+[01/01/2023, 10:01:30] Bob: Just staying home, nothing special.
+[01/01/2023, 10:02:00] Alice: Same here honestly
+[01/01/2023, 23:59:59] Bob: Almost midnight again already!

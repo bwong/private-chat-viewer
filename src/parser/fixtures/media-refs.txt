@@ -1,0 +1,8 @@
+[01/01/2023, 10:00:00] Alice: ‎image omitted
+[01/01/2023, 10:00:15] Bob: Nice photo!
+[01/01/2023, 10:01:00] Alice: <attached: IMG-20230101-WA0001.jpg>
+[01/01/2023, 10:02:00] Bob: ‎video omitted
+[01/01/2023, 10:03:00] Alice: ‎audio omitted
+[01/01/2023, 10:04:00] Bob: ‎document omitted
+[01/01/2023, 10:05:00] Alice: Here is a sticker
+[01/01/2023, 10:05:01] Alice: ‎sticker omitted

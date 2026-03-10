@@ -1,0 +1,48 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, sans-serif;
+  background-color: #ece5dd;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #128c7e;
+  color: #fff;
+  padding: 12px 24px;
+}
+
+.backButton {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.backButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.stats {
+  display: flex;
+  gap: 16px;
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+}
+
+.placeholder {
+  color: #555;
+  text-align: center;
+  margin-top: 80px;
+}
