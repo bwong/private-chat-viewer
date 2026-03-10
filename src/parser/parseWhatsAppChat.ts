@@ -1,8 +1,8 @@
 import type { Message } from '../types'
 
 // iOS export formats:
-//   [DD/MM/YYYY, HH:MM:SS] Sender: text          (24h, global)
-//   [M/D/YY, H:MM:SS AM/PM] Sender: text         (12h, US locale)
+//   [DD/MM/YYYY, HH:MM:SS] Sender: text          (24h, global → DD/MM)
+//   [M/D/YY, H:MM:SS AM/PM] Sender: text         (12h, US locale → MM/DD)
 // Android export format: DD/MM/YYYY, HH:MM - Sender: text
 //                     or D/M/YY, H:MM AM/PM - Sender: text
 
@@ -23,6 +23,8 @@ const IOS_MEDIA_OMITTED_RE =
   /^[\u200e\u200f]?(image|video|audio|sticker|document|GIF) omitted$/u
 const ANDROID_MEDIA_ATTACHED_RE = /^(.+) \(file attached\)$/
 
+export type DateOrder = 'mm/dd' | 'dd/mm'
+
 type Format = 'ios' | 'android'
 
 interface RawEntry {
@@ -31,15 +33,28 @@ interface RawEntry {
 }
 
 function detectFormat(text: string): Format {
-  // Scan the first several lines to find the first timestamped one.
-  // Header lines may appear before any timestamps.
-  // Some iOS exports prepend U+200E to every line, so strip it before checking.
   for (const line of text.split('\n').slice(0, 20)) {
     const clean = line.replace(BIDI_MARKS_RE, '')
     if (clean.startsWith('[')) return 'ios'
     if (/^\d{1,2}\/\d{1,2}\/\d{2,4},/.test(clean)) return 'android'
   }
   return 'ios' // fallback
+}
+
+/**
+ * Detect the date component order from the raw export text.
+ * AM/PM presence → US locale → MM/DD. 24h → international → DD/MM.
+ */
+export function detectDateOrder(rawText: string): DateOrder {
+  const text = rawText.startsWith('\uFEFF') ? rawText.slice(1) : rawText
+  for (const line of text.split('\n').slice(0, 50)) {
+    const clean = line.replace(BIDI_MARKS_RE, '')
+    const ios = IOS_DATE_PREFIX_RE.exec(clean)
+    if (ios && ios[7]) return 'mm/dd'
+    const android = ANDROID_DATE_PREFIX_RE.exec(clean)
+    if (android && android[7]) return 'mm/dd'
+  }
+  return 'dd/mm'
 }
 
 function parseDate(
@@ -50,14 +65,24 @@ function parseDate(
   minute: string,
   second: string | undefined,
   ampm: string | undefined,
+  usLocale: boolean,
 ): Date {
   let h = parseInt(hour, 10)
   const m = parseInt(minute, 10)
   const s = second ? parseInt(second, 10) : 0
   const y = year.length === 2 ? 2000 + parseInt(year, 10) : parseInt(year, 10)
-  // WhatsApp uses DD/MM/YYYY globally; locale variations (MM/DD) are a known edge case
-  const d = parseInt(day, 10)
-  const mo = parseInt(month, 10) - 1 // 0-indexed month
+
+  // usLocale (MM/DD): first number is month, second is day.
+  // International (DD/MM): first number is day, second is month.
+  let d: number
+  let mo: number
+  if (usLocale) {
+    mo = parseInt(day, 10) - 1
+    d = parseInt(month, 10)
+  } else {
+    d = parseInt(day, 10)
+    mo = parseInt(month, 10) - 1
+  }
 
   if (ampm) {
     if (ampm.toUpperCase() === 'PM' && h < 12) h += 12
@@ -67,29 +92,27 @@ function parseDate(
   return new Date(y, mo, d, h, m, s)
 }
 
-function extractIosEntry(line: string): RawEntry | null {
-  // Strip any leading bidi marks — some iOS exports prepend U+200E to every line
+function extractIosEntry(line: string, usLocale: boolean): RawEntry | null {
   const clean = line.replace(BIDI_MARKS_RE, '')
   const match = IOS_DATE_PREFIX_RE.exec(clean)
   if (!match) return null
   const [, day, month, year, hour, minute, second, ampm] = match
-  const timestamp = parseDate(day, month, year, hour, minute, second, ampm)
+  const timestamp = parseDate(day, month, year, hour, minute, second, ampm, usLocale)
   const body = clean.slice(match[0].length)
   return { timestamp, body }
 }
 
-function extractAndroidEntry(line: string): RawEntry | null {
+function extractAndroidEntry(line: string, usLocale: boolean): RawEntry | null {
   const clean = line.replace(BIDI_MARKS_RE, '')
   const match = ANDROID_DATE_PREFIX_RE.exec(clean)
   if (!match) return null
   const [, day, month, year, hour, minute, second, ampm] = match
-  const timestamp = parseDate(day, month, year, hour, minute, second, ampm)
+  const timestamp = parseDate(day, month, year, hour, minute, second, ampm, usLocale)
   const body = clean.slice(match[0].length)
   return { timestamp, body }
 }
 
 function extractMediaFilename(text: string): string | null {
-  // Strip leading bidi marks — iOS prepends U+200E before <attached: ...>
   const clean = text.replace(BIDI_MARKS_RE, '')
 
   let m = IOS_MEDIA_ATTACHED_RE.exec(clean)
@@ -99,7 +122,6 @@ function extractMediaFilename(text: string): string | null {
   if (m) return m[1]
 
   if (IOS_MEDIA_OMITTED_RE.test(clean)) {
-    // e.g. "image omitted" — no actual filename, just a placeholder
     return clean.trim()
   }
 
@@ -107,9 +129,6 @@ function extractMediaFilename(text: string): string | null {
 }
 
 function entryToMessage(id: string, timestamp: Date, body: string): Message {
-  // System message signals:
-  //   iOS:     body starts with LTR_MARK (U+200E)
-  //   Android: body has no ": " separator (no sender field)
   const startsWithBidi = body.startsWith(LTR_MARK) || body.startsWith(RTL_MARK)
   const colonIndex = body.indexOf(': ')
 
@@ -125,11 +144,16 @@ function entryToMessage(id: string, timestamp: Date, body: string): Message {
   }
 
   const sender = body.slice(0, colonIndex)
-  const rawText = body.slice(colonIndex + 2)
-  const mediaFilename = extractMediaFilename(rawText)
+  let rawText = body.slice(colonIndex + 2)
 
-  // When the entire text IS the media marker, don't store it as display text.
-  // It's a structural token, not a human-written caption.
+  // Strip the edited annotation — appears inline with a bidi mark on the same line,
+  // or as a continuation line depending on the platform/version.
+  // e.g. "text ‎<This message was edited>" or "text\n<This message was edited>"
+  const EDITED_MARK_RE = /[\n ][\u200e\u200f]*<This message was edited>$/
+  const isEdited = EDITED_MARK_RE.test(rawText)
+  if (isEdited) rawText = rawText.replace(EDITED_MARK_RE, '')
+
+  const mediaFilename = extractMediaFilename(rawText)
   const text = mediaFilename ? '' : rawText
 
   return {
@@ -139,16 +163,22 @@ function entryToMessage(id: string, timestamp: Date, body: string): Message {
     text,
     mediaFilename,
     isSystemMessage: false,
+    isEdited,
   }
 }
 
-export function parseWhatsAppChat(rawText: string): Message[] {
-  // Strip BOM if present
+export function parseWhatsAppChat(rawText: string, dateOrderOverride?: DateOrder): Message[] {
   const text = rawText.startsWith('\uFEFF') ? rawText.slice(1) : rawText
   const lines = text.split('\n').map((l) => l.trimEnd())
 
   const format = detectFormat(text)
-  const extractEntry = format === 'ios' ? extractIosEntry : extractAndroidEntry
+  const dateOrder = dateOrderOverride ?? detectDateOrder(text)
+  const usLocale = dateOrder === 'mm/dd'
+
+  const extractEntry =
+    format === 'ios'
+      ? (line: string) => extractIosEntry(line, usLocale)
+      : (line: string) => extractAndroidEntry(line, usLocale)
 
   const messages: Message[] = []
   let currentTimestamp: Date | null = null
@@ -170,10 +200,8 @@ export function parseWhatsAppChat(rawText: string): Message[] {
       currentTimestamp = entry.timestamp
       currentBodyLines = [entry.body]
     } else if (currentTimestamp !== null) {
-      // Continuation line of a multi-line message
       currentBodyLines.push(line)
     }
-    // Lines before the first timestamped message are ignored
   }
 
   flush()

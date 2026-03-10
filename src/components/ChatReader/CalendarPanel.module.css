@@ -1,0 +1,130 @@
+.panel {
+  position: fixed;
+  top: 0;
+  left: calc(50% + 390px + 8px);
+  width: 272px;
+  background: #fff;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.12);
+  border-radius: 0 0 0 12px;
+  padding-bottom: 16px;
+  z-index: 20;
+}
+
+/* ── Title row ── */
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  color: #888;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.closeBtn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+/* ── Month / year nav ── */
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px 6px;
+}
+
+.navArrow {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #444;
+  flex-shrink: 0;
+}
+
+.navArrow:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.navArrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.selects {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.select {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 2px;
+  font-size: 0.8rem;
+  background: #fff;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #128c7e;
+}
+
+/* ── Calendar grid ── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 4px 8px 0;
+}
+
+.dayLabel {
+  font-size: 0.7rem;
+  color: #aaa;
+  text-align: center;
+  padding: 4px 0;
+  font-weight: 600;
+}
+
+.day {
+  aspect-ratio: 1;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day:hover {
+  background: #e8f5f4;
+  color: #128c7e;
+}

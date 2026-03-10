@@ -35,5 +35,5 @@ export async function loadFromZip(file: File): Promise<ChatData> {
     ...new Set(messages.filter((m) => !m.isSystemMessage).map((m) => m.sender)),
   ]
 
-  return { messages, participants, mediaFiles }
+  return { messages, participants, mediaFiles, rawText: text }
 }

@@ -25,5 +25,5 @@ export async function loadFromFolder(files: FileList): Promise<ChatData> {
     ...new Set(messages.filter((m) => !m.isSystemMessage).map((m) => m.sender)),
   ]
 
-  return { messages, participants, mediaFiles }
+  return { messages, participants, mediaFiles, rawText: text }
 }

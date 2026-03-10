@@ -3,9 +3,13 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import type { ChatData } from '../../types'
 import { buildListItems } from './buildListItems'
 import { searchMessages } from './searchMessages'
+import { findNearestListIndex } from './findNearestListIndex'
+import { parseWhatsAppChat, detectDateOrder } from '../../parser/parseWhatsAppChat'
+import type { DateOrder } from '../../parser/parseWhatsAppChat'
 import { MessageBubble } from './MessageBubble'
 import { DateSeparator } from './DateSeparator'
 import { SearchPanel } from './SearchPanel'
+import { CalendarPanel } from './CalendarPanel'
 import styles from './ChatReader.module.css'
 
 // Palette for colour-coding senders in group chats
@@ -125,9 +129,35 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
 
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
-  const listItems = useMemo(() => buildListItems(chat.messages), [chat.messages])
-  const senderColors = useMemo(() => buildSenderColors(chat.participants), [chat.participants])
+  const [dateOrder, setDateOrder] = useState<DateOrder>(
+    () => detectDateOrder(chat.rawText),
+  )
+  const [messages, setMessages] = useState(chat.messages)
+
+  function handleToggleDateOrder() {
+    const next: DateOrder = dateOrder === 'mm/dd' ? 'dd/mm' : 'mm/dd'
+    setDateOrder(next)
+    setMessages(parseWhatsAppChat(chat.rawText, next))
+  }
+
+  const listItems = useMemo(() => buildListItems(messages), [messages])
+
+  const { minDate, maxDate } = useMemo(() => {
+    const msgs = messages.filter((m) => !m.isSystemMessage)
+    if (msgs.length === 0) {
+      const now = new Date()
+      return { minDate: now, maxDate: now }
+    }
+    return { minDate: msgs[0].timestamp, maxDate: msgs[msgs.length - 1].timestamp }
+  }, [messages])
+
+  const participants = useMemo(
+    () => [...new Set(messages.filter((m) => !m.isSystemMessage).map((m) => m.sender))],
+    [messages],
+  )
+  const senderColors = useMemo(() => buildSenderColors(participants), [participants])
 
   const { results: searchResults, capped: searchCapped } = useMemo(
     () => searchMessages(searchQuery, listItems),
@@ -167,6 +197,13 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
     setSearchQuery('')
   }
 
+  function handleSelectDate(date: Date) {
+    const idx = findNearestListIndex(date, listItems)
+    if (idx !== -1) {
+      virtualizer.scrollToIndex(idx, { align: 'start', behavior: 'smooth' })
+    }
+  }
+
   return (
     <div className={styles.page}>
       {/* ── Header ── */}
@@ -176,8 +213,8 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
         </button>
 
         <div className={styles.stats}>
-          <span>{chat.messages.length.toLocaleString()} messages</span>
-          <span>{chat.participants.length} participants</span>
+          <span>{messages.length.toLocaleString()} messages</span>
+          <span>{participants.length} participants</span>
           {chat.mediaFiles.size > 0 && (
             <span>{chat.mediaFiles.size.toLocaleString()} media</span>
           )}
@@ -190,11 +227,27 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
         )}
 
         <button
+          className={styles.dateOrderButton}
+          onClick={handleToggleDateOrder}
+          title={`Date format: ${dateOrder.toUpperCase()} — click to switch`}
+        >
+          {dateOrder.toUpperCase()}
+        </button>
+
+        <button
           className={`${styles.searchButton} ${searchOpen ? styles.searchButtonActive : ''}`}
           onClick={() => setSearchOpen((o) => !o)}
           aria-label="Search messages"
         >
           🔍
+        </button>
+
+        <button
+          className={`${styles.searchButton} ${calendarOpen ? styles.searchButtonActive : ''}`}
+          onClick={() => setCalendarOpen((o) => !o)}
+          aria-label="Jump to date"
+        >
+          📅
         </button>
       </header>
 
@@ -209,10 +262,19 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
         />
       )}
 
+      {calendarOpen && (
+        <CalendarPanel
+          minDate={minDate}
+          maxDate={maxDate}
+          onSelect={handleSelectDate}
+          onClose={() => setCalendarOpen(false)}
+        />
+      )}
+
       {/* ── Participant picker overlay ── */}
       {currentUser === null && (
         <ParticipantPicker
-          participants={chat.participants}
+          participants={participants}
           onSelect={handleSelectUser}
           onSkip={handleSkip}
         />

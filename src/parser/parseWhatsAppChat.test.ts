@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { parseWhatsAppChat } from './parseWhatsAppChat'
+import { parseWhatsAppChat, detectDateOrder } from './parseWhatsAppChat'
 
 import iosBasic from './fixtures/ios-basic.txt?raw'
 import iosAmpm from './fixtures/ios-ampm.txt?raw'
@@ -236,6 +236,120 @@ describe('media references', () => {
 
   test('non-media messages have null mediaFilename', () => {
     expect(messages[1].mediaFilename).toBeNull()
+  })
+})
+
+// ─── Edited messages ──────────────────────────────────────────────────────────
+
+describe('edited messages', () => {
+  test('strips inline " ‎<This message was edited>" (real iOS format) and sets isEdited=true', () => {
+    // Real iOS format: edited mark appended inline with a U+200E bidi mark
+    const text =
+      '[6/23/23, 7:03:28 AM] Brian: P woke up at 620 \u200e<This message was edited>'
+    const messages = parseWhatsAppChat(text)
+    expect(messages).toHaveLength(1)
+    expect(messages[0].text).toBe('P woke up at 620')
+    expect(messages[0].isEdited).toBe(true)
+  })
+
+  test('strips continuation-line <This message was edited> and sets isEdited=true', () => {
+    const text =
+      '[01/01/2023, 10:00:00] Alice: Hello world\n<This message was edited>'
+    const messages = parseWhatsAppChat(text)
+    expect(messages).toHaveLength(1)
+    expect(messages[0].text).toBe('Hello world')
+    expect(messages[0].isEdited).toBe(true)
+  })
+
+  test('does not set isEdited for unedited messages', () => {
+    const messages = parseWhatsAppChat('[01/01/2023, 10:00:00] Alice: Hello')
+    expect(messages[0].isEdited).toBeFalsy()
+  })
+
+  test('handles multi-line message followed by edited mark', () => {
+    const text =
+      '[01/01/2023, 10:00:00] Alice: Line one\nLine two\n<This message was edited>'
+    const messages = parseWhatsAppChat(text)
+    expect(messages[0].text).toBe('Line one\nLine two')
+    expect(messages[0].isEdited).toBe(true)
+  })
+
+  test('preserves media filename and sets isEdited for edited media messages', () => {
+    const text =
+      '[01/01/2023, 10:00:00] Alice: <attached: photo.jpg>\n<This message was edited>'
+    const messages = parseWhatsAppChat(text)
+    expect(messages[0].mediaFilename).toBe('photo.jpg')
+    expect(messages[0].isEdited).toBe(true)
+  })
+})
+
+// ─── detectDateOrder ──────────────────────────────────────────────────────────
+
+describe('detectDateOrder', () => {
+  test('returns mm/dd for iOS AM/PM export', () => {
+    expect(detectDateOrder('[12/19/23, 9:12:09 AM] Nina: test')).toBe('mm/dd')
+  })
+
+  test('returns mm/dd for Android AM/PM export', () => {
+    expect(detectDateOrder('1/1/23, 10:00 AM - Alice: hi')).toBe('mm/dd')
+  })
+
+  test('returns dd/mm for iOS 24h export', () => {
+    expect(detectDateOrder('[01/01/2023, 10:00:00] Alice: Hello')).toBe('dd/mm')
+  })
+
+  test('returns dd/mm for Android 24h export', () => {
+    expect(detectDateOrder('01/01/2023, 10:00 - Alice: Hello')).toBe('dd/mm')
+  })
+
+  test('returns dd/mm for empty text', () => {
+    expect(detectDateOrder('')).toBe('dd/mm')
+  })
+})
+
+// ─── parseWhatsAppChat dateOrderOverride ──────────────────────────────────────
+
+describe('parseWhatsAppChat dateOrderOverride', () => {
+  test('override dd/mm forces DD/MM parsing even on AM/PM export', () => {
+    // [1/3/23] with AM/PM auto-detects as MM/DD → January 3
+    // with dd/mm override → March 1
+    const msgs = parseWhatsAppChat('[1/3/23, 9:00:00 AM] Alice: hi', 'dd/mm')
+    expect(msgs[0].timestamp.getMonth()).toBe(2) // March = 2
+    expect(msgs[0].timestamp.getDate()).toBe(1)
+  })
+
+  test('override mm/dd forces MM/DD parsing on 24h export', () => {
+    // [3/1/2023] with 24h auto-detects as DD/MM → January 3
+    // with mm/dd override → March 1... wait, day > 12 so verify unambiguous
+    // Use [1/3/2023] 24h: auto=DD/MM → March 1, override=MM/DD → January 3
+    const msgs = parseWhatsAppChat('[1/3/2023, 10:00:00] Alice: hi', 'mm/dd')
+    expect(msgs[0].timestamp.getMonth()).toBe(0) // January = 0
+    expect(msgs[0].timestamp.getDate()).toBe(3)
+  })
+})
+
+// ─── iOS AM/PM date order (US locale MM/DD) ───────────────────────────────────
+
+describe('iOS AM/PM US locale date order', () => {
+  test('parses MM/DD/YY correctly when day > 12 (unambiguous)', () => {
+    // 12/19/23 must be December 19 — month 19 is impossible, so first = month, second = day
+    const messages = parseWhatsAppChat('[12/19/23, 9:12:09 AM] Nina: test message')
+    expect(messages).toHaveLength(1)
+    const ts = messages[0].timestamp
+    expect(ts.getFullYear()).toBe(2023)
+    expect(ts.getMonth()).toBe(11) // December = 11
+    expect(ts.getDate()).toBe(19)
+    expect(ts.getHours()).toBe(9)
+    expect(ts.getMinutes()).toBe(12)
+  })
+
+  test('parses ambiguous date as MM/DD when AM/PM present', () => {
+    // [4/10/11] with AM/PM → April 10, 2011 (not October 4)
+    const messages = parseWhatsAppChat('[4/10/11, 9:27:59 PM] Brian: Hi')
+    const ts = messages[0].timestamp
+    expect(ts.getMonth()).toBe(3) // April = 3
+    expect(ts.getDate()).toBe(10)
+    expect(ts.getFullYear()).toBe(2011)
   })
 })
 

@@ -81,6 +81,23 @@
   border-color: rgba(255, 255, 255, 0.7);
 }
 
+.dateOrderButton {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  padding: 4px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.dateOrderButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 /* ── Scroll container ────────────────────────────────────────────────────── */
 
 .scrollContainer {

@@ -111,7 +111,10 @@ export function MessageBubble({ message, isOwn, senderColor, mediaFile }: Messag
           <p className={styles.caption}>{message.text}</p>
         )}
 
-        <span className={styles.timestamp}>{formatTime(message.timestamp)}</span>
+        <span className={styles.timestamp}>
+          {message.isEdited && <span className={styles.editedLabel}>Edited</span>}
+          {formatTime(message.timestamp)}
+        </span>
       </div>
     </div>
   )

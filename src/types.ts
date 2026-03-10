@@ -5,12 +5,14 @@ export interface Message {
   text: string
   mediaFilename: string | null
   isSystemMessage: boolean
+  isEdited?: boolean
 }
 
 export interface ChatData {
   messages: Message[]
   participants: string[]
   mediaFiles: Map<string, File>
+  rawText: string
 }
 
 export type AppState =
