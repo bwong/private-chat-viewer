@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import styles from './CalendarPanel.module.css'
+import { strings } from '../../strings'
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-
-const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+const s = strings.calendar
+const MONTH_NAMES = s.months
+const DAY_LABELS = s.dayAbbreviations
 
 interface CalendarPanelProps {
   minDate: Date
@@ -53,8 +51,8 @@ export function CalendarPanel({ minDate, maxDate, onSelect, onClose }: CalendarP
   return (
     <div className={styles.panel}>
       <div className={styles.titleRow}>
-        <span className={styles.title}>Jump to date</span>
-        <button className={styles.closeBtn} onClick={onClose} aria-label="Close calendar">
+        <span className={styles.title}>{s.title}</span>
+        <button className={styles.closeBtn} onClick={onClose} aria-label={s.closeAriaLabel}>
           ✕
         </button>
       </div>
@@ -65,7 +63,7 @@ export function CalendarPanel({ minDate, maxDate, onSelect, onClose }: CalendarP
           className={styles.navArrow}
           onClick={prevMonth}
           disabled={!canGoPrev}
-          aria-label="Previous month"
+          aria-label={s.prevAriaLabel}
         >
           ‹
         </button>
@@ -100,7 +98,7 @@ export function CalendarPanel({ minDate, maxDate, onSelect, onClose }: CalendarP
           className={styles.navArrow}
           onClick={nextMonth}
           disabled={!canGoNext}
-          aria-label="Next month"
+          aria-label={s.nextAriaLabel}
         >
           ›
         </button>

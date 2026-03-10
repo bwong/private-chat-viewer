@@ -1,4 +1,7 @@
 import styles from './DateSeparator.module.css'
+import { strings } from '../../strings'
+
+const s = strings.dateSeparator
 
 interface DateSeparatorProps {
   date: Date
@@ -10,8 +13,8 @@ function formatDate(date: Date): string {
   const yesterday = new Date(today.getTime() - 86_400_000)
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
 
-  if (d.getTime() === today.getTime()) return 'Today'
-  if (d.getTime() === yesterday.getTime()) return 'Yesterday'
+  if (d.getTime() === today.getTime()) return s.today
+  if (d.getTime() === yesterday.getTime()) return s.yesterday
 
   return date.toLocaleDateString('en-US', {
     year: 'numeric',

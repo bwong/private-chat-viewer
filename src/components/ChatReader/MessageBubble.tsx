@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { Message } from '../../types'
 import styles from './MessageBubble.module.css'
+import { strings } from '../../strings'
+
+const s = strings.messageBubble
 
 const OMITTED_RE = /^(image|video|audio|sticker|document|GIF) omitted$/i
 
@@ -46,7 +49,7 @@ function MediaDisplay({ file, filename }: { file: File | null; filename: string 
       <div className={styles.mediaPlaceholder}>
         <span className={styles.mediaPlaceholderIcon}>{isOmitted ? '🚫' : '🖼️'}</span>
         <span className={styles.mediaPlaceholderText}>
-          {isOmitted ? 'Media not included in export' : 'Photo no longer available'}
+          {isOmitted ? s.mediaOmitted : s.mediaNotFound}
         </span>
         {!isOmitted && (
           <span className={styles.mediaPlaceholderFilename}>{filename}</span>
@@ -112,7 +115,7 @@ export function MessageBubble({ message, isOwn, senderColor, mediaFile }: Messag
         )}
 
         <span className={styles.timestamp}>
-          {message.isEdited && <span className={styles.editedLabel}>Edited</span>}
+          {message.isEdited && <span className={styles.editedLabel}>{s.edited}</span>}
           {formatTime(message.timestamp)}
         </span>
       </div>

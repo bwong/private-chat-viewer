@@ -11,6 +11,11 @@ import { DateSeparator } from './DateSeparator'
 import { SearchPanel } from './SearchPanel'
 import { CalendarPanel } from './CalendarPanel'
 import styles from './ChatReader.module.css'
+import { strings } from '../../strings'
+
+const sp = strings.participantPicker
+const sd = strings.dateFormatPicker
+const sh = strings.header
 
 // Palette for colour-coding senders in group chats
 const SENDER_COLORS = [
@@ -50,10 +55,8 @@ function ParticipantPicker({ participants, onSelect, onSkip }: ParticipantPicker
   return (
     <div className={styles.pickerOverlay}>
       <div className={styles.pickerCard}>
-        <h2 className={styles.pickerTitle}>Who are you in this chat?</h2>
-        <p className={styles.pickerSubtitle}>
-          Your messages will appear on the right, just like in WhatsApp.
-        </p>
+        <h2 className={styles.pickerTitle}>{sp.title}</h2>
+        <p className={styles.pickerSubtitle}>{sp.subtitle}</p>
 
         {participants.length > 0 && (
           <ul className={styles.pickerList}>
@@ -69,23 +72,20 @@ function ParticipantPicker({ participants, onSelect, onSkip }: ParticipantPicker
 
         {!showManual && participants.length > 0 && (
           <button className={styles.pickerNotListed} onClick={() => setShowManual(true)}>
-            My name isn't listed…
+            {sp.notListed}
           </button>
         )}
 
         {showManual && (
           <div className={styles.pickerManual}>
             {participants.length === 0 && (
-              <p className={styles.pickerManualNote}>
-                Participants could not be detected automatically. Type your name exactly as it
-                appears in the chat:
-              </p>
+              <p className={styles.pickerManualNote}>{sp.manualNote}</p>
             )}
             <div className={styles.pickerManualRow}>
               <input
                 className={styles.pickerManualInput}
                 type="text"
-                placeholder="Your name in the chat"
+                placeholder={sp.manualPlaceholder}
                 value={manualName}
                 onChange={(e) => setManualName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
@@ -96,14 +96,14 @@ function ParticipantPicker({ participants, onSelect, onSkip }: ParticipantPicker
                 onClick={handleManualSubmit}
                 disabled={!manualName.trim()}
               >
-                Confirm
+                {sp.confirm}
               </button>
             </div>
           </div>
         )}
 
         <button className={styles.pickerSkip} onClick={onSkip}>
-          Skip — show all messages on the left
+          {sp.skip}
         </button>
       </div>
     </div>
@@ -214,27 +214,27 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
       {/* ── Header ── */}
       <header className={styles.header}>
         <button className={styles.backButton} onClick={onReset}>
-          ← Back
+          {sh.back}
         </button>
 
         <div className={styles.stats}>
-          <span>{messages.length.toLocaleString()} messages</span>
-          <span>{participants.length} participants</span>
+          <span>{sh.statMessages(messages.length)}</span>
+          <span>{sh.statParticipants(participants.length)}</span>
           {chat.mediaFiles.size > 0 && (
-            <span>{chat.mediaFiles.size.toLocaleString()} media</span>
+            <span>{sh.statMedia(chat.mediaFiles.size)}</span>
           )}
         </div>
 
         {currentUser !== null && (
           <button className={styles.youButton} onClick={handleChangeUser}>
-            {currentUser ? `You: ${currentUser}` : 'No identity set'} ▾
+            {currentUser ? sh.youLabel(currentUser) : sh.noIdentity} ▾
           </button>
         )}
 
         <button
           className={styles.dateOrderButton}
           onClick={() => setDateOrderPickerOpen(true)}
-          title="Change date format"
+          title={sh.dateFormatButtonTitle}
         >
           {dateOrder === 'mm/dd' ? 'M/D' : 'D/M'}
         </button>
@@ -242,7 +242,7 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
         <button
           className={`${styles.searchButton} ${searchOpen ? styles.searchButtonActive : ''}`}
           onClick={() => setSearchOpen((o) => !o)}
-          aria-label="Search messages"
+          aria-label={sh.searchAriaLabel}
         >
           🔍
         </button>
@@ -250,7 +250,7 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
         <button
           className={`${styles.searchButton} ${calendarOpen ? styles.searchButtonActive : ''}`}
           onClick={() => setCalendarOpen((o) => !o)}
-          aria-label="Jump to date"
+          aria-label={sh.calendarAriaLabel}
         >
           📅
         </button>
@@ -280,14 +280,10 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
       {dateOrderPickerOpen && (
         <div className={styles.pickerOverlay} onClick={() => setDateOrderPickerOpen(false)}>
           <div className={styles.pickerCard} onClick={(e) => e.stopPropagation()}>
-            <h2 className={styles.pickerTitle}>Date format</h2>
-            <p className={styles.pickerSubtitle}>
-              How are dates ordered in this chat? Select the format that matches your export.
-            </p>
+            <h2 className={styles.pickerTitle}>{sd.title}</h2>
+            <p className={styles.pickerSubtitle}>{sd.subtitle}</p>
             {dateOrderConfidence === 'guessed' && (
-              <p className={styles.pickerDetectedNote}>
-                Could not detect with certainty — guessed from time format. Adjust if dates look wrong.
-              </p>
+              <p className={styles.pickerDetectedNote}>{sd.guessedNote}</p>
             )}
             <ul className={styles.pickerList}>
               <li>
@@ -295,7 +291,7 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
                   className={`${styles.pickerOption} ${dateOrder === 'mm/dd' ? styles.pickerOptionActive : ''}`}
                   onClick={() => handleSelectDateOrder('mm/dd')}
                 >
-                  Month / Day (e.g. 6/23/25)
+                  {sd.monthDay}
                 </button>
               </li>
               <li>
@@ -303,12 +299,12 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
                   className={`${styles.pickerOption} ${dateOrder === 'dd/mm' ? styles.pickerOptionActive : ''}`}
                   onClick={() => handleSelectDateOrder('dd/mm')}
                 >
-                  Day / Month (e.g. 23/6/25)
+                  {sd.dayMonth}
                 </button>
               </li>
             </ul>
             <button className={styles.pickerSkip} onClick={() => setDateOrderPickerOpen(false)}>
-              Cancel
+              {sd.cancel}
             </button>
           </div>
         </div>

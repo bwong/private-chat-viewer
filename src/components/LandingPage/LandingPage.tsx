@@ -1,5 +1,8 @@
 import { useRef, useState } from 'react'
 import styles from './LandingPage.module.css'
+import { strings } from '../../strings'
+
+const s = strings.landing
 
 interface LandingPageProps {
   isLoading: boolean
@@ -43,7 +46,7 @@ export function LandingPage({ isLoading, error, onZipFile, onFolder }: LandingPa
       onZipFile(file)
     } else {
       // Surface a clear error rather than silently failing
-      alert('Please drop a .zip file. To load an unzipped folder, use the "Open folder" button.')
+      alert(s.dropZipOnly)
     }
   }
 
@@ -52,16 +55,13 @@ export function LandingPage({ isLoading, error, onZipFile, onFolder }: LandingPa
       <div className={styles.privacyBanner}>
         <span className={styles.privacyIcon}>🔒</span>
         <span>
-          <strong>Your data never leaves this browser.</strong> All processing happens locally. You
-          can turn off your internet connection and this app will continue to work.
+          <strong>{s.privacyBanner}</strong> {s.privacyDetail}
         </span>
       </div>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>WhatsApp Chat Reader</h1>
-        <p className={styles.subtitle}>
-          Load a WhatsApp export to browse, read, and search your messages offline.
-        </p>
+        <h1 className={styles.title}>{s.appTitle}</h1>
+        <p className={styles.subtitle}>{s.appSubtitle}</p>
 
         <div className={styles.options}>
           {/* ZIP option */}
@@ -72,16 +72,14 @@ export function LandingPage({ isLoading, error, onZipFile, onFolder }: LandingPa
             onDrop={handleDrop}
           >
             <div className={styles.cardIcon}>📦</div>
-            <h2 className={styles.cardTitle}>Upload .zip file</h2>
-            <p className={styles.cardDescription}>
-              Select or drag & drop the <code>.zip</code> file exported directly from WhatsApp.
-            </p>
+            <h2 className={styles.cardTitle}>{s.zipCardTitle}</h2>
+            <p className={styles.cardDescription}>{s.zipCardDetail}</p>
             <button
               className={styles.button}
               onClick={() => zipInputRef.current?.click()}
               disabled={isLoading}
             >
-              Choose .zip file
+              {s.zipCardButton}
             </button>
             <input
               ref={zipInputRef}
@@ -99,17 +97,14 @@ export function LandingPage({ isLoading, error, onZipFile, onFolder }: LandingPa
           {/* Folder option */}
           <div className={styles.card}>
             <div className={styles.cardIcon}>📂</div>
-            <h2 className={styles.cardTitle}>Open folder</h2>
-            <p className={styles.cardDescription}>
-              Already unzipped? Select the folder that contains <code>_chat.txt</code> and your
-              media files. Better for large exports.
-            </p>
+            <h2 className={styles.cardTitle}>{s.folderCardTitle}</h2>
+            <p className={styles.cardDescription}>{s.folderCardDetail}</p>
             <button
               className={styles.button}
               onClick={() => folderInputRef.current?.click()}
               disabled={isLoading}
             >
-              Choose folder
+              {s.folderCardButton}
             </button>
             <input
               ref={folderInputRef}
@@ -123,18 +118,16 @@ export function LandingPage({ isLoading, error, onZipFile, onFolder }: LandingPa
         </div>
 
         {isLoading && (
-          <p className={styles.status}>Loading and parsing your chat… this may take a moment for large exports.</p>
+          <p className={styles.status}>{s.loadingMessage}</p>
         )}
 
         {error && (
           <div className={styles.error}>
-            <strong>Error:</strong> {error}
+            <strong>{s.errorLabel}</strong> {error}
           </div>
         )}
 
-        <p className={styles.hint}>
-          To export from WhatsApp: open a chat → ⋮ menu → More → Export chat.
-        </p>
+        <p className={styles.hint}>{s.exportHint}</p>
       </main>
     </div>
   )

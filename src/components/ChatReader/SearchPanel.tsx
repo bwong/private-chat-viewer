@@ -1,6 +1,9 @@
 import { useRef, useEffect } from 'react'
 import type { SearchResult } from './searchMessages'
 import styles from './SearchPanel.module.css'
+import { strings } from '../../strings'
+
+const s = strings.search
 
 const SNIPPET_WINDOW = 100
 const SNIPPET_PRE = 35 // chars before match to show
@@ -71,11 +74,11 @@ export function SearchPanel({
           ref={inputRef}
           className={styles.input}
           type="search"
-          placeholder="Search messages…"
+          placeholder={s.placeholder}
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
         />
-        <button className={styles.closeBtn} onClick={onClose} aria-label="Close search">
+        <button className={styles.closeBtn} onClick={onClose} aria-label={s.closeAriaLabel}>
           ✕
         </button>
       </div>
@@ -83,10 +86,10 @@ export function SearchPanel({
       {hasQuery && (
         <div className={styles.meta}>
           {results.length === 0
-            ? 'No results'
+            ? s.noResults
             : capped
-              ? '200+ results'
-              : `${results.length} result${results.length === 1 ? '' : 's'}`}
+              ? s.manyResults
+              : s.resultCount(results.length)}
         </div>
       )}
 
