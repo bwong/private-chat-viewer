@@ -1,0 +1,129 @@
+/* ── Row layout ─────────────────────────────────────────────────────────── */
+
+.row {
+  display: flex;
+  padding: 2px 12px;
+}
+
+.rowOwn {
+  justify-content: flex-end;
+}
+
+.rowOther {
+  justify-content: flex-start;
+}
+
+/* ── Bubble ──────────────────────────────────────────────────────────────── */
+
+.bubble {
+  max-width: min(480px, 72%);
+  border-radius: 8px;
+  padding: 6px 10px 4px;
+  position: relative;
+  word-break: break-word;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+
+.bubbleOwn {
+  background-color: #d9fdd3;
+  border-bottom-right-radius: 2px;
+}
+
+.bubbleOther {
+  background-color: #ffffff;
+  border-bottom-left-radius: 2px;
+}
+
+/* ── Sender name ─────────────────────────────────────────────────────────── */
+
+.senderName {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+/* ── Text ────────────────────────────────────────────────────────────────── */
+
+.text {
+  margin: 0 0 2px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #111;
+  white-space: pre-wrap;
+}
+
+.caption {
+  margin: 4px 0 2px;
+  font-size: 0.875rem;
+  color: #333;
+}
+
+/* ── Timestamp ───────────────────────────────────────────────────────────── */
+
+.timestamp {
+  display: block;
+  font-size: 0.68rem;
+  color: #888;
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* ── Media ───────────────────────────────────────────────────────────────── */
+
+.mediaImage {
+  display: block;
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.mediaVideo {
+  display: block;
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 6px;
+}
+
+.mediaAudio {
+  display: block;
+  width: 100%;
+  margin: 4px 0;
+}
+
+.mediaFile {
+  display: block;
+  color: #128c7e;
+  font-size: 0.875rem;
+  padding: 6px 0;
+  text-decoration: none;
+}
+
+.mediaFile:hover {
+  text-decoration: underline;
+}
+
+.mediaOmitted {
+  color: #888;
+  font-size: 0.85rem;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* ── System message ─────────────────────────────────────────────────────── */
+
+.system {
+  display: flex;
+  justify-content: center;
+  padding: 4px 24px;
+}
+
+.systemText {
+  background-color: rgba(255, 255, 255, 0.7);
+  color: #666;
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 10px;
+  text-align: center;
+}
