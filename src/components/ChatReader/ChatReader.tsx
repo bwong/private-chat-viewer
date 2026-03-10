@@ -2,8 +2,10 @@ import { useRef, useMemo, useState, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { ChatData } from '../../types'
 import { buildListItems } from './buildListItems'
+import { searchMessages } from './searchMessages'
 import { MessageBubble } from './MessageBubble'
 import { DateSeparator } from './DateSeparator'
+import { SearchPanel } from './SearchPanel'
 import styles from './ChatReader.module.css'
 
 // Palette for colour-coding senders in group chats
@@ -121,8 +123,16 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
     () => localStorage.getItem(storageKey),
   )
 
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
   const listItems = useMemo(() => buildListItems(chat.messages), [chat.messages])
   const senderColors = useMemo(() => buildSenderColors(chat.participants), [chat.participants])
+
+  const { results: searchResults, capped: searchCapped } = useMemo(
+    () => searchMessages(searchQuery, listItems),
+    [searchQuery, listItems],
+  )
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -148,6 +158,15 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
     setCurrentUser(null)
   }
 
+  function handleSelectResult(listIndex: number) {
+    virtualizer.scrollToIndex(listIndex, { align: 'start', behavior: 'smooth' })
+  }
+
+  function handleCloseSearch() {
+    setSearchOpen(false)
+    setSearchQuery('')
+  }
+
   return (
     <div className={styles.page}>
       {/* ── Header ── */}
@@ -169,7 +188,26 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
             {currentUser ? `You: ${currentUser}` : 'No identity set'} ▾
           </button>
         )}
+
+        <button
+          className={`${styles.searchButton} ${searchOpen ? styles.searchButtonActive : ''}`}
+          onClick={() => setSearchOpen((o) => !o)}
+          aria-label="Search messages"
+        >
+          🔍
+        </button>
       </header>
+
+      {searchOpen && (
+        <SearchPanel
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
+          results={searchResults}
+          capped={searchCapped}
+          onSelect={handleSelectResult}
+          onClose={handleCloseSearch}
+        />
+      )}
 
       {/* ── Participant picker overlay ── */}
       {currentUser === null && (
