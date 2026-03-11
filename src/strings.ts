@@ -7,17 +7,19 @@
 export const strings = {
   // ── Landing page ────────────────────────────────────────────────────────────
   landing: {
-    privacyBanner: 'Your data never leaves this browser.',
+    privacyBanner: 'Your files are never uploaded anywhere.',
     privacyDetail:
-      'All processing happens locally. You can turn off your internet connection and this app will continue to work.',
+      'Everything is processed locally in your browser — no server, no POST request, no network traffic. You can disconnect from the internet before loading your file and it will work just fine.',
     appTitle: 'WhatsApp Chat Reader',
     appSubtitle: 'Load a WhatsApp export to browse, read, and search your messages offline.',
-    zipCardTitle: 'Upload .zip file',
-    zipCardDetail: 'Select or drag & drop the .zip file exported directly from WhatsApp.',
+    zipCardTitle: 'Open .zip file',
+    zipCardDetail: 'Select or drag & drop the .zip file exported directly from WhatsApp. Nothing is uploaded — the file is read locally.',
     zipCardButton: 'Choose .zip file',
     folderCardTitle: 'Open folder',
     folderCardDetail:
       'Already unzipped? Select the folder that contains _chat.txt and your media files. Better for large exports.',
+    folderCardBrowserNote:
+      'Your browser will ask "Upload files to this site?" — this is just asking for read permission. Nothing is sent anywhere.',
     folderCardButton: 'Choose folder',
     loadingMessage: 'Loading and parsing your chat… this may take a moment for large exports.',
     errorLabel: 'Error:',

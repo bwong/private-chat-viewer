@@ -15,6 +15,7 @@ export function LandingPage({ isLoading, error, onZipFile, onFolder }: LandingPa
   const zipInputRef = useRef<HTMLInputElement>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [dropError, setDropError] = useState<string | null>(null)
 
   function handleZipInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -43,10 +44,10 @@ export function LandingPage({ isLoading, error, onZipFile, onFolder }: LandingPa
     if (!file) return
 
     if (file.name.endsWith('.zip')) {
+      setDropError(null)
       onZipFile(file)
     } else {
-      // Surface a clear error rather than silently failing
-      alert(s.dropZipOnly)
+      setDropError(s.dropZipOnly)
     }
   }
 
@@ -106,6 +107,7 @@ export function LandingPage({ isLoading, error, onZipFile, onFolder }: LandingPa
             >
               {s.folderCardButton}
             </button>
+            <p className={styles.cardNote}>{s.folderCardBrowserNote}</p>
             <input
               ref={folderInputRef}
               type="file"
@@ -121,9 +123,9 @@ export function LandingPage({ isLoading, error, onZipFile, onFolder }: LandingPa
           <p className={styles.status}>{s.loadingMessage}</p>
         )}
 
-        {error && (
+        {(error || dropError) && (
           <div className={styles.error}>
-            <strong>{s.errorLabel}</strong> {error}
+            <strong>{s.errorLabel}</strong> {error ?? dropError}
           </div>
         )}
 

@@ -96,6 +96,14 @@
   line-height: 1.5;
 }
 
+.cardNote {
+  font-size: 0.75rem;
+  color: #999;
+  margin: 8px 0 0;
+  line-height: 1.4;
+  font-style: italic;
+}
+
 .button {
   background-color: #128c7e;
   color: #fff;
