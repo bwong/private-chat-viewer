@@ -84,6 +84,18 @@ export const strings = {
     dayAbbreviations: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
   },
 
+  // ── Media gallery ────────────────────────────────────────────────────────────
+  mediaGallery: {
+    title: 'Media',
+    close: 'Close',
+    empty: 'No media files in this chat.',
+    photos: (n: number) => `Photos (${n})`,
+    videos: (n: number) => `Videos (${n})`,
+    audio: (n: number) => `Audio (${n})`,
+    files: (n: number) => `Files (${n})`,
+    openAriaLabel: 'Browse media',
+  },
+
   // ── Media lightbox ───────────────────────────────────────────────────────────
   mediaLightbox: {
     download: 'Download',

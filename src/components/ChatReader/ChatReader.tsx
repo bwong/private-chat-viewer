@@ -10,6 +10,7 @@ import { MessageBubble } from './MessageBubble'
 import { DateSeparator } from './DateSeparator'
 import { SearchPanel } from './SearchPanel'
 import { CalendarPanel } from './CalendarPanel'
+import { MediaGalleryPanel } from './MediaGalleryPanel'
 import styles from './ChatReader.module.css'
 import { strings } from '../../strings'
 import { formatDateLabel } from './formatDateLabel'
@@ -17,6 +18,7 @@ import { formatDateLabel } from './formatDateLabel'
 const sp = strings.participantPicker
 const sd = strings.dateFormatPicker
 const sh = strings.header
+const sg = strings.mediaGallery
 
 // Palette for colour-coding senders in group chats
 const SENDER_COLORS = [
@@ -140,6 +142,7 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [galleryOpen, setGalleryOpen] = useState(false)
   const [dateOrderPickerOpen, setDateOrderPickerOpen] = useState(false)
 
   const [dateOrder, setDateOrder] = useState<DateOrder>(
@@ -286,6 +289,14 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
         >
           📅
         </button>
+
+        <button
+          className={`${styles.searchButton} ${galleryOpen ? styles.searchButtonActive : ''}`}
+          onClick={() => setGalleryOpen((o) => !o)}
+          aria-label={sg.openAriaLabel}
+        >
+          🖼️
+        </button>
       </header>
 
       {searchOpen && (
@@ -340,6 +351,15 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* ── Media gallery overlay ── */}
+      {galleryOpen && (
+        <MediaGalleryPanel
+          messages={messages}
+          mediaFiles={chat.mediaFiles}
+          onClose={() => setGalleryOpen(false)}
+        />
       )}
 
       {/* ── Participant picker overlay ── */}
