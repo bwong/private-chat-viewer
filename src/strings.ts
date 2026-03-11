@@ -94,6 +94,7 @@ export const strings = {
     audio: (n: number) => `Audio (${n})`,
     files: (n: number) => `Files (${n})`,
     openAriaLabel: 'Browse media',
+    jumpToMessage: 'Jump to message',
   },
 
   // ── Media lightbox ───────────────────────────────────────────────────────────

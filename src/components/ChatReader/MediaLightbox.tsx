@@ -10,9 +10,10 @@ interface MediaLightboxProps {
   objectUrl: string
   kind: 'image' | 'video'
   onClose: () => void
+  onJumpToMessage?: () => void
 }
 
-export function MediaLightbox({ file, objectUrl, kind, onClose }: MediaLightboxProps) {
+export function MediaLightbox({ file, objectUrl, kind, onClose, onJumpToMessage }: MediaLightboxProps) {
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
@@ -25,6 +26,11 @@ export function MediaLightbox({ file, objectUrl, kind, onClose }: MediaLightboxP
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.toolbar} onClick={(e) => e.stopPropagation()}>
         <span className={styles.filename}>{file.name}</span>
+        {onJumpToMessage && (
+          <button className={styles.jump} onClick={() => { onClose(); onJumpToMessage() }}>
+            {strings.mediaGallery.jumpToMessage}
+          </button>
+        )}
         <a className={styles.download} href={objectUrl} download={file.name}>
           {s.download}
         </a>

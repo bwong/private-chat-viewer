@@ -1,7 +1,7 @@
 import { useRef, useMemo, useState, useCallback } from 'react'
 import { Search, Calendar, LayoutGrid } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import type { ChatData } from '../../types'
+import type { ChatData, Message } from '../../types'
 import { buildListItems } from './buildListItems'
 import { searchMessages } from './searchMessages'
 import { findNearestListIndex } from './findNearestListIndex'
@@ -163,6 +163,14 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
 
   const listItems = useMemo(() => buildListItems(messages), [messages])
 
+  const messageToListIndex = useMemo(() => {
+    const map = new Map<Message, number>()
+    listItems.forEach((item, i) => {
+      if (item.type === 'message') map.set(item.message, i)
+    })
+    return map
+  }, [listItems])
+
   const { minDate, maxDate } = useMemo(() => {
     const msgs = messages.filter((m) => !m.isSystemMessage)
     if (msgs.length === 0) {
@@ -238,6 +246,14 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
   function handleCloseSearch() {
     setSearchOpen(false)
     setSearchQuery('')
+  }
+
+  function handleJumpToMessage(msg: Message) {
+    const idx = messageToListIndex.get(msg)
+    if (idx !== undefined) {
+      virtualizer.scrollToIndex(idx, { align: 'center', behavior: 'smooth' })
+    }
+    setGalleryOpen(false)
   }
 
   function handleSelectDate(date: Date) {
@@ -363,6 +379,7 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
           messages={messages}
           mediaFiles={chat.mediaFiles}
           onClose={() => setGalleryOpen(false)}
+          onJumpToMessage={handleJumpToMessage}
         />
       )}
 

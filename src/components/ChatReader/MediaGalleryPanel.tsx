@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Message } from '../../types'
 import { MediaLightbox } from './MediaLightbox'
 import styles from './MediaGalleryPanel.module.css'
@@ -37,6 +37,41 @@ function groupByMonth(items: MediaItem[]): { label: string; items: MediaItem[] }
   return Array.from(groups.entries()).map(([label, items]) => ({ label, items }))
 }
 
+// ── Context menu ──────────────────────────────────────────────────────────────
+
+interface ContextMenuProps {
+  x: number
+  y: number
+  onJump: () => void
+  onClose: () => void
+}
+
+function ContextMenu({ x, y, onJump, onClose }: ContextMenuProps) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handlePointerDown(e: PointerEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    window.addEventListener('pointerdown', handlePointerDown)
+    return () => window.removeEventListener('pointerdown', handlePointerDown)
+  }, [onClose])
+
+  // Clamp so the menu doesn't bleed off the right edge
+  const menuWidth = 160
+  const left = Math.min(x, window.innerWidth - menuWidth - 8)
+
+  return (
+    <div ref={ref} className={styles.contextMenu} style={{ left, top: y }}>
+      <button className={styles.contextMenuItem} onClick={() => { onClose(); onJump() }}>
+        {s.jumpToMessage}
+      </button>
+    </div>
+  )
+}
+
 // ── Gallery item ──────────────────────────────────────────────────────────────
 
 interface GalleryItemProps {
@@ -44,11 +79,13 @@ interface GalleryItemProps {
   kind: MediaKind
   sender: string
   timestamp: Date
+  onJumpToMessage: () => void
 }
 
-function GalleryItem({ file, kind, sender, timestamp }: GalleryItemProps) {
+function GalleryItem({ file, kind, sender, timestamp, onJumpToMessage }: GalleryItemProps) {
   const [objectUrl, setObjectUrl] = useState<string | null>(null)
   const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     const url = URL.createObjectURL(file)
@@ -72,9 +109,14 @@ function GalleryItem({ file, kind, sender, timestamp }: GalleryItemProps) {
     }
   }
 
+  function handleContextMenu(e: React.MouseEvent) {
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY })
+  }
+
   return (
     <>
-      <button className={styles.item} onClick={handleClick} title={label}>
+      <button className={styles.item} onClick={handleClick} onContextMenu={handleContextMenu} title={label}>
         {kind === 'image' && (
           <img src={objectUrl} alt={file.name} className={styles.thumbnail} />
         )}
@@ -96,12 +138,21 @@ function GalleryItem({ file, kind, sender, timestamp }: GalleryItemProps) {
           </div>
         )}
       </button>
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onJump={onJumpToMessage}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
       {lightboxOpen && objectUrl && (kind === 'image' || kind === 'video') && (
         <MediaLightbox
           file={file}
           objectUrl={objectUrl}
           kind={kind}
           onClose={() => setLightboxOpen(false)}
+          onJumpToMessage={onJumpToMessage}
         />
       )}
     </>
@@ -115,20 +166,22 @@ interface MediaItem {
   kind: MediaKind
   sender: string
   timestamp: Date
+  message: Message
 }
 
 interface MediaGalleryPanelProps {
   messages: Message[]
   mediaFiles: Map<string, File>
   onClose: () => void
+  onJumpToMessage: (msg: Message) => void
 }
 
-export function MediaGalleryPanel({ messages, mediaFiles, onClose }: MediaGalleryPanelProps) {
+export function MediaGalleryPanel({ messages, mediaFiles, onClose, onJumpToMessage }: MediaGalleryPanelProps) {
   const items: MediaItem[] = messages
     .filter((m) => m.mediaFilename != null && mediaFiles.has(m.mediaFilename))
     .map((m) => {
       const file = mediaFiles.get(m.mediaFilename!)!
-      return { file, kind: getKind(file), sender: m.sender, timestamp: m.timestamp }
+      return { file, kind: getKind(file), sender: m.sender, timestamp: m.timestamp, message: m }
     })
 
   const photos = items.filter((i) => i.kind === 'image')
@@ -157,7 +210,9 @@ export function MediaGalleryPanel({ messages, mediaFiles, onClose }: MediaGaller
                   <div key={group.label} className={styles.monthGroup}>
                     <h4 className={styles.monthTitle}>{group.label}</h4>
                     <div className={styles.grid}>
-                      {group.items.map((item, i) => <GalleryItem key={i} {...item} />)}
+                      {group.items.map((item, i) => (
+                        <GalleryItem key={i} {...item} onJumpToMessage={() => onJumpToMessage(item.message)} />
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -170,7 +225,9 @@ export function MediaGalleryPanel({ messages, mediaFiles, onClose }: MediaGaller
                   <div key={group.label} className={styles.monthGroup}>
                     <h4 className={styles.monthTitle}>{group.label}</h4>
                     <div className={styles.grid}>
-                      {group.items.map((item, i) => <GalleryItem key={i} {...item} />)}
+                      {group.items.map((item, i) => (
+                        <GalleryItem key={i} {...item} onJumpToMessage={() => onJumpToMessage(item.message)} />
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -183,7 +240,9 @@ export function MediaGalleryPanel({ messages, mediaFiles, onClose }: MediaGaller
                   <div key={group.label} className={styles.monthGroup}>
                     <h4 className={styles.monthTitle}>{group.label}</h4>
                     <div className={`${styles.grid} ${styles.gridList}`}>
-                      {group.items.map((item, i) => <GalleryItem key={i} {...item} />)}
+                      {group.items.map((item, i) => (
+                        <GalleryItem key={i} {...item} onJumpToMessage={() => onJumpToMessage(item.message)} />
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -196,7 +255,9 @@ export function MediaGalleryPanel({ messages, mediaFiles, onClose }: MediaGaller
                   <div key={group.label} className={styles.monthGroup}>
                     <h4 className={styles.monthTitle}>{group.label}</h4>
                     <div className={`${styles.grid} ${styles.gridList}`}>
-                      {group.items.map((item, i) => <GalleryItem key={i} {...item} />)}
+                      {group.items.map((item, i) => (
+                        <GalleryItem key={i} {...item} onJumpToMessage={() => onJumpToMessage(item.message)} />
+                      ))}
                     </div>
                   </div>
                 ))}
