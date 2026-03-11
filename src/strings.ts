@@ -84,6 +84,13 @@ export const strings = {
     dayAbbreviations: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
   },
 
+  // ── Media lightbox ───────────────────────────────────────────────────────────
+  mediaLightbox: {
+    download: 'Download',
+    close: 'Close',
+    expand: 'View full size',
+  },
+
   // ── Message bubble ───────────────────────────────────────────────────────────
   messageBubble: {
     mediaOmitted: 'Media not included in export',

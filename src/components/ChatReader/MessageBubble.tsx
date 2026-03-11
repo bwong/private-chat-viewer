@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Message } from '../../types'
 import styles from './MessageBubble.module.css'
 import { strings } from '../../strings'
+import { MediaLightbox } from './MediaLightbox'
 
 const s = strings.messageBubble
 
@@ -33,8 +34,11 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
+const sl = strings.mediaLightbox
+
 function MediaDisplay({ file, filename }: { file: File | null; filename: string }) {
   const [objectUrl, setObjectUrl] = useState<string | null>(null)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
 
   useEffect(() => {
     if (!file) return
@@ -62,13 +66,38 @@ function MediaDisplay({ file, filename }: { file: File | null; filename: string 
 
   if (kind === 'image') {
     return objectUrl ? (
-      <img src={objectUrl} alt={file.name} className={styles.mediaImage} />
+      <>
+        <img
+          src={objectUrl}
+          alt={file.name}
+          className={`${styles.mediaImage} ${styles.mediaClickable}`}
+          onClick={() => setLightboxOpen(true)}
+        />
+        {lightboxOpen && (
+          <MediaLightbox file={file} objectUrl={objectUrl} kind="image" onClose={() => setLightboxOpen(false)} />
+        )}
+      </>
     ) : null
   }
 
   if (kind === 'video') {
     return objectUrl ? (
-      <video src={objectUrl} controls className={styles.mediaVideo} />
+      <>
+        <div className={styles.mediaVideoWrapper}>
+          <video src={objectUrl} controls className={styles.mediaVideo} />
+          <button
+            className={styles.mediaExpandButton}
+            onClick={() => setLightboxOpen(true)}
+            aria-label={sl.expand}
+            title={sl.expand}
+          >
+            ⛶
+          </button>
+        </div>
+        {lightboxOpen && (
+          <MediaLightbox file={file} objectUrl={objectUrl} kind="video" onClose={() => setLightboxOpen(false)} />
+        )}
+      </>
     ) : null
   }
 

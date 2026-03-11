@@ -1,0 +1,45 @@
+import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import styles from './MediaLightbox.module.css'
+import { strings } from '../../strings'
+
+const s = strings.mediaLightbox
+
+interface MediaLightboxProps {
+  file: File
+  objectUrl: string
+  kind: 'image' | 'video'
+  onClose: () => void
+}
+
+export function MediaLightbox({ file, objectUrl, kind, onClose }: MediaLightboxProps) {
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return createPortal(
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.toolbar} onClick={(e) => e.stopPropagation()}>
+        <span className={styles.filename}>{file.name}</span>
+        <a className={styles.download} href={objectUrl} download={file.name}>
+          {s.download}
+        </a>
+        <button className={styles.close} onClick={onClose} aria-label={s.close}>
+          ✕
+        </button>
+      </div>
+      <div className={styles.content} onClick={(e) => e.stopPropagation()}>
+        {kind === 'image' ? (
+          <img src={objectUrl} alt={file.name} className={styles.image} />
+        ) : (
+          <video src={objectUrl} controls autoPlay className={styles.video} />
+        )}
+      </div>
+    </div>,
+    document.body,
+  )
+}
