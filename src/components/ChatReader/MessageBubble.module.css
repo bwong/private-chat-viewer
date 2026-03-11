@@ -53,6 +53,16 @@
   white-space: pre-wrap;
 }
 
+.textDeleted {
+  color: #888;
+  font-style: italic;
+}
+
+.deletedIcon {
+  margin-right: 5px;
+  font-style: normal;
+}
+
 .caption {
   margin: 4px 0 2px;
   font-size: 0.875rem;

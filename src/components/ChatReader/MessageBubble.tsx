@@ -7,6 +7,7 @@ import { MediaLightbox } from './MediaLightbox'
 const s = strings.messageBubble
 
 const OMITTED_RE = /^(image|video|audio|sticker|document|GIF) omitted$/i
+const DELETED_RE = /^\u200e?(You deleted this message\.|This message was deleted\.)$/i
 
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp'])
 const VIDEO_EXTS = new Set(['mp4', 'mov', 'avi', 'webm', '3gp', 'mkv'])
@@ -134,9 +135,15 @@ export function MessageBubble({ message, isOwn, senderColor, mediaFile }: Messag
           <MediaDisplay file={mediaFile} filename={message.mediaFilename} />
         )}
 
-        {message.text && !message.mediaFilename && (
-          <p className={styles.text}>{message.text}</p>
-        )}
+        {message.text && !message.mediaFilename && (() => {
+          const isDeleted = DELETED_RE.test(message.text)
+          return (
+            <p className={`${styles.text} ${isDeleted ? styles.textDeleted : ''}`}>
+              {isDeleted && <span className={styles.deletedIcon}>⊘</span>}
+              {message.text}
+            </p>
+          )
+        })()}
 
         {/* Show text caption below media if both exist */}
         {message.text && message.mediaFilename && (
