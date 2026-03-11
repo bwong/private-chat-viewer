@@ -48,6 +48,12 @@ interface ContextMenuProps {
 
 function ContextMenu({ x, y, onJump, onClose }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const itemRef = useRef<HTMLButtonElement>(null)
+
+  // Auto-focus the menu item so keyboard users can act immediately
+  useEffect(() => {
+    itemRef.current?.focus()
+  }, [])
 
   useEffect(() => {
     function handlePointerDown(e: PointerEvent) {
@@ -55,8 +61,15 @@ function ContextMenu({ x, y, onJump, onClose }: ContextMenuProps) {
         onClose()
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') { e.stopPropagation(); onClose() }
+    }
     window.addEventListener('pointerdown', handlePointerDown)
-    return () => window.removeEventListener('pointerdown', handlePointerDown)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [onClose])
 
   // Clamp so the menu doesn't bleed off the right edge
@@ -64,8 +77,13 @@ function ContextMenu({ x, y, onJump, onClose }: ContextMenuProps) {
   const left = Math.min(x, window.innerWidth - menuWidth - 8)
 
   return (
-    <div ref={ref} className={styles.contextMenu} style={{ left, top: y }}>
-      <button className={styles.contextMenuItem} onClick={() => { onClose(); onJump() }}>
+    <div ref={ref} role="menu" className={styles.contextMenu} style={{ left, top: y }}>
+      <button
+        ref={itemRef}
+        role="menuitem"
+        className={styles.contextMenuItem}
+        onClick={() => { onClose(); onJump() }}
+      >
         {s.jumpToMessage}
       </button>
     </div>
@@ -116,24 +134,30 @@ function GalleryItem({ file, kind, sender, timestamp, onJumpToMessage }: Gallery
 
   return (
     <>
-      <button className={styles.item} onClick={handleClick} onContextMenu={handleContextMenu} title={label}>
+      <button
+        className={styles.item}
+        onClick={handleClick}
+        onContextMenu={handleContextMenu}
+        title={label}
+        aria-label={label}
+      >
         {kind === 'image' && (
           <img src={objectUrl} alt={file.name} className={styles.thumbnail} />
         )}
         {kind === 'video' && (
           <div className={`${styles.thumbnail} ${styles.videoThumb}`}>
-            <span className={styles.mediaIcon}>▶</span>
+            <span className={styles.mediaIcon} aria-hidden="true">▶</span>
           </div>
         )}
         {kind === 'audio' && (
           <div className={`${styles.thumbnail} ${styles.audioThumb}`}>
-            <span className={styles.mediaIcon}>♪</span>
+            <span className={styles.mediaIcon} aria-hidden="true">♪</span>
             <span className={styles.thumbLabel}>{file.name}</span>
           </div>
         )}
         {kind === 'other' && (
           <div className={`${styles.thumbnail} ${styles.fileThumb}`}>
-            <span className={styles.mediaIcon}>📎</span>
+            <span className={styles.mediaIcon} aria-hidden="true">📎</span>
             <span className={styles.thumbLabel}>{file.name}</span>
           </div>
         )}
@@ -177,6 +201,12 @@ interface MediaGalleryPanelProps {
 }
 
 export function MediaGalleryPanel({ messages, mediaFiles, onClose, onJumpToMessage }: MediaGalleryPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    panelRef.current?.focus()
+  }, [])
+
   const items: MediaItem[] = messages
     .filter((m) => m.mediaFilename != null && mediaFiles.has(m.mediaFilename))
     .map((m) => {
@@ -191,7 +221,15 @@ export function MediaGalleryPanel({ messages, mediaFiles, onClose, onJumpToMessa
 
   return (
     <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={s.title}
+        tabIndex={-1}
+        className={styles.panel}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className={styles.header}>
           <h2 className={styles.title}>{s.title}</h2>
           <button className={styles.close} onClick={onClose} aria-label={s.close}>

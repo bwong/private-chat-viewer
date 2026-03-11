@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './MediaLightbox.module.css'
 import { strings } from '../../strings'
@@ -14,6 +14,12 @@ interface MediaLightboxProps {
 }
 
 export function MediaLightbox({ file, objectUrl, kind, onClose, onJumpToMessage }: MediaLightboxProps) {
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    closeRef.current?.focus()
+  }, [])
+
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
@@ -23,7 +29,13 @@ export function MediaLightbox({ file, objectUrl, kind, onClose, onJumpToMessage 
   }, [onClose])
 
   return createPortal(
-    <div className={styles.overlay} onClick={onClose}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={file.name}
+      className={styles.overlay}
+      onClick={onClose}
+    >
       <div className={styles.toolbar} onClick={(e) => e.stopPropagation()}>
         <span className={styles.filename}>{file.name}</span>
         {onJumpToMessage && (
@@ -34,7 +46,7 @@ export function MediaLightbox({ file, objectUrl, kind, onClose, onJumpToMessage 
         <a className={styles.download} href={objectUrl} download={file.name}>
           {s.download}
         </a>
-        <button className={styles.close} onClick={onClose} aria-label={s.close}>
+        <button ref={closeRef} className={styles.close} onClick={onClose} aria-label={s.close}>
           ✕
         </button>
       </div>
