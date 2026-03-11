@@ -13,6 +13,8 @@ A private, offline viewer for WhatsApp chat exports. No uploads, no server — e
 - Search messages
 - Identify yourself to distinguish sent vs received messages
 - Supports images, video, audio, and file attachments
+- Click images or videos to view full-screen with download option
+- Media gallery to browse all photos, videos, and files by month
 
 ## How to export your WhatsApp chat
 
@@ -40,6 +42,13 @@ A private, offline viewer for WhatsApp chat exports. No uploads, no server — e
 git clone https://github.com/bwong/private-chat-viewer.git
 cd private-chat-viewer
 npm install
+npm run build
+npm run preview
+```
+
+For local development with hot reload:
+
+```bash
 npm run dev
 ```
 
