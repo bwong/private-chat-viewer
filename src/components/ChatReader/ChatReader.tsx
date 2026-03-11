@@ -1,4 +1,5 @@
 import { useRef, useMemo, useState, useCallback } from 'react'
+import { Search, Calendar, LayoutGrid } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { ChatData } from '../../types'
 import { buildListItems } from './buildListItems'
@@ -278,24 +279,27 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
           className={`${styles.searchButton} ${searchOpen ? styles.searchButtonActive : ''}`}
           onClick={() => setSearchOpen((o) => !o)}
           aria-label={sh.searchAriaLabel}
+          title={sh.searchAriaLabel}
         >
-          🔍
+          <Search size={15} strokeWidth={1.75} />
         </button>
 
         <button
           className={`${styles.searchButton} ${calendarOpen ? styles.searchButtonActive : ''}`}
           onClick={() => setCalendarOpen((o) => !o)}
           aria-label={sh.calendarAriaLabel}
+          title={sh.calendarAriaLabel}
         >
-          📅
+          <Calendar size={15} strokeWidth={1.75} />
         </button>
 
         <button
           className={`${styles.searchButton} ${galleryOpen ? styles.searchButtonActive : ''}`}
           onClick={() => setGalleryOpen((o) => !o)}
           aria-label={sg.openAriaLabel}
+          title={sg.openAriaLabel}
         >
-          🖼️
+          <LayoutGrid size={15} strokeWidth={1.75} />
         </button>
       </header>
 
