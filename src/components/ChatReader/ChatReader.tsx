@@ -40,11 +40,13 @@ function buildSenderColors(participants: string[]): Record<string, string> {
 
 interface ParticipantPickerProps {
   participants: string[]
+  currentUser: string | null
   onSelect: (name: string) => void
   onSkip: () => void
+  onDismiss: () => void
 }
 
-function ParticipantPicker({ participants, onSelect, onSkip }: ParticipantPickerProps) {
+function ParticipantPicker({ participants, currentUser, onSelect, onSkip, onDismiss }: ParticipantPickerProps) {
   const [manualName, setManualName] = useState('')
   const [showManual, setShowManual] = useState(participants.length === 0)
 
@@ -54,16 +56,22 @@ function ParticipantPicker({ participants, onSelect, onSkip }: ParticipantPicker
   }, [manualName, onSelect])
 
   return (
-    <div className={styles.pickerOverlay}>
-      <div className={styles.pickerCard}>
-        <h2 className={styles.pickerTitle}>{sp.title}</h2>
+    <div className={styles.pickerOverlay} onClick={onDismiss}>
+      <div className={styles.pickerCard} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.pickerCardHeader}>
+          <h2 className={styles.pickerTitle}>{sp.title}</h2>
+          <button className={styles.pickerDismiss} onClick={onDismiss} aria-label={sp.dismiss}>✕</button>
+        </div>
         <p className={styles.pickerSubtitle}>{sp.subtitle}</p>
 
         {participants.length > 0 && (
           <ul className={styles.pickerList}>
             {participants.map((name) => (
               <li key={name}>
-                <button className={styles.pickerOption} onClick={() => onSelect(name)}>
+                <button
+                  className={`${styles.pickerOption} ${name === currentUser ? styles.pickerOptionActive : ''}`}
+                  onClick={() => onSelect(name)}
+                >
                   {name}
                 </button>
               </li>
@@ -127,6 +135,7 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
   const [currentUser, setCurrentUser] = useState<string | null>(
     () => localStorage.getItem(storageKey),
   )
+  const [pickerOpen, setPickerOpen] = useState(() => localStorage.getItem(storageKey) === null)
 
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -205,16 +214,17 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
   function handleSelectUser(name: string) {
     localStorage.setItem(storageKey, name)
     setCurrentUser(name)
+    setPickerOpen(false)
   }
 
   function handleSkip() {
     localStorage.setItem(storageKey, '')
     setCurrentUser('')
+    setPickerOpen(false)
   }
 
   function handleChangeUser() {
-    localStorage.removeItem(storageKey)
-    setCurrentUser(null)
+    setPickerOpen(true)
   }
 
   function handleSelectResult(listIndex: number) {
@@ -249,11 +259,9 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
           )}
         </div>
 
-        {currentUser !== null && (
-          <button className={styles.youButton} onClick={handleChangeUser}>
-            {currentUser ? sh.youLabel(currentUser) : sh.noIdentity} ▾
-          </button>
-        )}
+        <button className={styles.youButton} onClick={handleChangeUser}>
+          {currentUser ? sh.youLabel(currentUser) : sh.noIdentity} ▾
+        </button>
 
         <button
           className={styles.dateOrderButton}
@@ -335,11 +343,13 @@ export function ChatReader({ chat, onReset }: ChatReaderProps) {
       )}
 
       {/* ── Participant picker overlay ── */}
-      {currentUser === null && (
+      {pickerOpen && (
         <ParticipantPicker
           participants={participants}
+          currentUser={currentUser}
           onSelect={handleSelectUser}
           onSkip={handleSkip}
+          onDismiss={() => setPickerOpen(false)}
         />
       )}
 

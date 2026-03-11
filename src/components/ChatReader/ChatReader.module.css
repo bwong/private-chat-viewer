@@ -152,11 +152,33 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
+.pickerCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
 .pickerTitle {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
   color: #1a1a1a;
+}
+
+.pickerDismiss {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.pickerDismiss:hover {
+  color: #555;
 }
 
 .pickerSubtitle {

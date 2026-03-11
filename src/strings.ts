@@ -48,6 +48,7 @@ export const strings = {
     manualPlaceholder: 'Your name in the chat',
     confirm: 'Confirm',
     skip: 'Skip — show all messages on the left',
+    dismiss: 'Close',
   },
 
   // ── Date format picker ───────────────────────────────────────────────────────
